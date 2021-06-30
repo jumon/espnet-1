@@ -736,6 +736,10 @@ def train(args):
         report_keys_cer_ctc = [
             "main/cer_ctc{}".format(i + 1) for i in range(model.num_encs)
         ] + ["validation/main/cer_ctc{}".format(i + 1) for i in range(model.num_encs)]
+    elif "multictc" in args.model_module:
+        report_keys_loss_ctc = [
+            "main/loss_ctc_layer{}".format(i + 1) for i in model.multi_position
+        ] + ["validation/main/loss_ctc_layer{}".format(i + 1) for i in model.multi_position]
     trainer.extend(
         extensions.PlotReport(
             [
@@ -746,7 +750,8 @@ def train(args):
                 "main/loss_att",
                 "validation/main/loss_att",
             ]
-            + ([] if args.num_encs == 1 else report_keys_loss_ctc),
+            + ([] if args.num_encs == 1 else report_keys_loss_ctc)
+            + ([] if "multictc" not in args.model_module else report_keys_loss_ctc),
             "epoch",
             file_name="loss.png",
         )
@@ -853,7 +858,7 @@ def train(args):
         "main/cer_ctc",
         "validation/main/cer_ctc",
         "elapsed_time",
-    ] + ([] if args.num_encs == 1 else report_keys_cer_ctc + report_keys_loss_ctc)
+    ] + ([] if args.num_encs == 1 else report_keys_cer_ctc + report_keys_loss_ctc) + ([] if "multictc" not in args.model_module else report_keys_loss_ctc)
     if args.opt == "adadelta":
         trainer.extend(
             extensions.observe_value(
